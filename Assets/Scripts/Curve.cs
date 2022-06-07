@@ -9,7 +9,8 @@ using UnityExtendedEditor.Attributes;
 public class Curve : MonoBehaviour {
     [SerializeField] private SmoothMode smoothMode;
     public bool loop;
-    [SerializeField] private float smoothMinStep = 0.1f;
+    [SerializeField] private float smoothStep1 = 0.1f;
+    [SerializeField] private float smoothStep2 = 0.1f;
     [SerializeField, Range(1, 10)] private int strength;
     [SerializeField] private Color pointsColor = Color.red;
     [SerializeField] private Color lineColor = Color.white;
@@ -22,6 +23,7 @@ public class Curve : MonoBehaviour {
     private void OnValidate() {
         curvePoints = new List<Transform>(GetComponentsInChildren<Transform>().Where(
             v => v != transform));
+        if (smoothStep2 + smoothStep1 > 1) smoothStep2 = 1 - smoothStep1;
     }
 
     [Button]
@@ -77,7 +79,7 @@ public class Curve : MonoBehaviour {
 #endif
         SmoothedPoints = curvePoints.Select(p => p.position).ToArray();
         for (int i = 0; i < strength; ++i) {
-            SimpleCornerCutting.SmoothCurve(this, smoothMinStep);
+            SimpleCornerCutting.SmoothCurve(this, smoothStep1, smoothStep2);
         }
     }
 }

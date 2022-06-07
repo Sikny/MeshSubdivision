@@ -247,7 +247,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   smoothMode: 0
   loop: 0
-  smoothMinStep: 0.15
+  smoothStep1: 0.2
+  smoothStep2: 0.2
   strength: 10
   pointsColor: {r: 1, g: 0, b: 0, a: 0}
   lineColor: {r: 1, g: 1, b: 1, a: 1}
