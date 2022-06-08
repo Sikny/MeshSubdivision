@@ -29,8 +29,6 @@ public static class Subdivisions {
         foreach (var face in faces) {
             var center = face.Center(vertices);
             verticesOut.Add(center);
-            Debug.DrawRay(transform.TransformPoint(center), center.normalized * 0.1f, new Color(0.5f, 0.49f, 0.79f),
-                1000);
         }
 
         // 2 - Compute edge points - center of face points & edge corners
@@ -38,9 +36,6 @@ public static class Subdivisions {
             var edgeFaces = faces.FindAll(tri => tri.Contains(edge));
             var edgePoint = Triangle.EdgePoint(edge, edgeFaces, vertices);
             verticesOut.Add(edgePoint);
-
-            Debug.DrawRay(transform.TransformPoint(edgePoint), edgePoint.normalized * 0.1f, new Color(1f, 0.57f, 0.84f),
-                1000);
         }
 
         // 3 - Link faces centers to edge points and transform original vertices
@@ -84,8 +79,6 @@ public static class Subdivisions {
                 transformedVert = (f + 2f * r + (n - 3f) * vert) / n;
                 transformedIndex = verticesOut.Count;
                 verticesOut.Add(transformedVert);
-                Debug.DrawRay(transform.TransformPoint(transformedVert), transformedVert.normalized * 0.1f, new Color(0.65f, 0.85f, 0.65f),
-                    1000);
                 
                 trianglesOut.Add(transformedIndex);
                 trianglesOut.Add(edgeInd);
@@ -127,30 +120,6 @@ public static class Subdivisions {
             trianglesOut.Add(transformedIndex);
             trianglesOut.Add(prevEdgeInd);
             trianglesOut.Add(edgeInd);
-
-
-            /*foreach (var pointIndex in pts) {
-                // f : average of all n recently created face points for faces touching vert
-                var touchingFaces = faces.Where(f => f.Contains(pointIndex)).ToArray();
-                var vert = vertices[pointIndex];
-                var f = touchingFaces.Select(tri => tri.Center(vertices)).ToArray().Average();
-                var n = touchingFaces.Length;
-
-                // r : average of all n edge midpoints for original edges touching vert
-                var touchingEdges = edges.Where(edge => edge.s1 == pointIndex || edge.s2 == pointIndex).ToArray();
-                var r = touchingEdges.Select(e => e.Center(vertices)).ToArray().Average();
-
-                var tranformedVert = (f + 2f * r + (n - 3f) * vert) / n;
-                var transformedIndex = verticesOut.Count;
-                verticesOut.Add(tranformedVert);
-                
-                Debug.DrawRay(transform.TransformPoint(tranformedVert), tranformedVert.normalized * 0.1f, new Color(0.65f, 0.85f, 0.65f),
-                    1000);
-                
-                trianglesOut.Add(transformedIndex);
-                trianglesOut.Add(edgesPoints[i - 1]);
-                trianglesOut.Add(edgesPoints[i]);
-            }*/
         }
 
         result.vertices = verticesOut.ToArray();
