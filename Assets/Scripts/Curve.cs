@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityExtendedEditor.Attributes;
 
 public class Curve : MonoBehaviour {
-    [SerializeField] private SmoothMode smoothMode;
     public bool loop;
     [SerializeField] private float smoothStep1 = 0.1f;
     [SerializeField] private float smoothStep2 = 0.1f;
@@ -24,6 +23,8 @@ public class Curve : MonoBehaviour {
         curvePoints = new List<Transform>(GetComponentsInChildren<Transform>().Where(
             v => v != transform));
         if (smoothStep2 + smoothStep1 > 1) smoothStep2 = 1 - smoothStep1;
+
+        SmoothCurve();
     }
 
     [Button]
@@ -73,7 +74,7 @@ public class Curve : MonoBehaviour {
     }
 
     [Button]
-    private void SmoothCurve() {
+    public void SmoothCurve() {
 #if UNITY_EDITOR
         Undo.RecordObject(this, "Smooth curve");
 #endif
