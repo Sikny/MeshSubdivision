@@ -93,6 +93,21 @@ namespace Geometry {
             int maxIndex = indices.Max();
             Array.Resize(ref vertices, maxIndex + 1);
         }
+
+        public override bool Equals(object obj) {
+            var otherTri = obj as Triangle;
+            if (otherTri == null) return false;
+            var pts = Points;
+            var otherPts = otherTri.Points;
+            for (int i = pts.Length - 1; i >= 0; --i) {
+                if (!otherPts.Contains(pts[i])) return false;
+            }
+            return true;
+        }
+        
+        public override int GetHashCode() {
+            return e1.GetHashCode() + e2.GetHashCode() + e3.GetHashCode();
+        }
     }
 
     [Serializable]

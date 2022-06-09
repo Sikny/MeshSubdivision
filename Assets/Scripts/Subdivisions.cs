@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Geometry;
+using Unity.VisualScripting;
 using UnityEngine;
+using Edge = Geometry.Edge;
 
 public static class Subdivisions {
     private const float Tolerance = 0.001f;
@@ -176,32 +178,83 @@ public static class Subdivisions {
     public static Mesh Root3Kobbelt(Mesh mesh) {
         Mesh result = new Mesh();
 
-        var verts = mesh.vertices;
+        var vertices = mesh.vertices;
         var indices = mesh.triangles;
 
-        Triangle.MakeUniqueVertices(ref verts, ref indices);
+        Triangle.MakeUniqueVertices(ref vertices, ref indices);
 
-        var vertices = verts.ToList();
+        var faces = Triangle.ListFromIndices(indices);
+        var edges = Edge.ListFromIndices(indices);
 
-        var triangles = Triangle.ListFromIndices(indices);
-        var trianglesOut = new List<Triangle>();
-        for (int i = 0; i < triangles.Count; ++i) {
-            var triangle = triangles[i];
-            var pts = triangle.Points;
-            var center = triangle.Center(vertices.ToArray());
-            int cent = vertices.Count;
+        var verticesOut = new List<Vector3>();
+        var indicesOut = new List<int>();
 
-            int ind0 = pts[0];
-            int ind1 = pts[1];
-            int ind2 = pts[2];
-            vertices.Add(center);
-            trianglesOut.Add(new Triangle(ind0, ind1, cent));
-            trianglesOut.Add(new Triangle(ind2, ind0, cent));
-            trianglesOut.Add(new Triangle(ind1, ind2, cent));
+        // Compute perturbed vertices
+        for (int i = 0; i < vertices.Length; ++i) {
+            int vertIndex = i;
+            var vert = vertices[vertIndex];
+            var touchingVertsIndices = edges.Where(e => e.s1 == vertIndex || e.s2 == vertIndex)
+                .Select(e => e.s1 == vertIndex ? e.s2 : e.s1).ToArray();
+            var n = touchingVertsIndices.Length;
+            var alpha = 1 / 9f * (4 - 2f * Mathf.Cos(2f * Mathf.PI / n));
+            var transformedVertex = (1 - alpha) * vert + alpha / n * Sum(touchingVertsIndices.Select(ind => vertices[ind]));
+            
+            verticesOut.Add(transformedVertex);
         }
 
-        result.vertices = vertices.ToArray();
-        result.triangles = trianglesOut.Select(tri => tri.Points).SelectMany(pt => pt).ToArray();
+        var centersIndices = new Dictionary<Triangle, int>();
+        var newTriangles = new List<Triangle>();
+        // build triangles from faces centers
+        foreach (var face in faces) {
+            var vertIndices = face.Points;
+            var center = face.Center(vertices);
+
+            var v1 = vertIndices[0];
+            var v2 = vertIndices[1];
+            var v3 = vertIndices[2];
+
+            var centerInd = verticesOut.Count;
+            verticesOut.Add(center);
+
+            newTriangles.Add(new Triangle(v1, v2, centerInd));
+            
+            newTriangles.Add(new Triangle(v1, centerInd, v3));
+            
+            newTriangles.Add(new Triangle(v2, v3, centerInd));
+
+            centersIndices.Add(face, centerInd);
+        }
+        
+        // flipping
+        for (var index = 0; index < edges.Count; index++) {
+            var edge = edges[index];
+            var edgeFaces = faces.FindAll(tri => tri.Contains(edge));
+            var center1 = centersIndices[edgeFaces[0]];
+            var center2 = centersIndices[edgeFaces[1]];
+
+            int indexVert = 0;
+            newTriangles.ForEach(tri => {
+                if (tri.Contains(edge)) {
+                    tri.Set(new [] {
+                        new Edge(center2, center1),
+                        new Edge(center1, indexVert == 0 ? edge.s1 : edge.s2),
+                        new Edge(indexVert == 0 ? edge.s1 : edge.s2, center2)
+                    });
+                    ++indexVert;
+                }
+            });
+        }
+
+        indicesOut.Clear();
+        for (int i = 0; i < newTriangles.Count; ++i) {
+            var pts = newTriangles[i].Points;
+            indicesOut.Add(pts[0]);
+            indicesOut.Add(pts[1]);
+            indicesOut.Add(pts[2]);
+        }
+
+        result.vertices = verticesOut.ToArray();
+        result.triangles = indicesOut.ToArray();
 
         return result;
     }
