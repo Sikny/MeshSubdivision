@@ -37,89 +37,52 @@ public static class Subdivisions {
             var edgePoint = Triangle.EdgePoint(edge, edgeFaces, vertices);
             verticesOut.Add(edgePoint);
         }
-
+        
         // 3 - Link faces centers to edge points and transform original vertices
-        foreach (var face in faces) {
-            var center = face.Center(vertices);
-            int centerIndex = verticesOut.FindIndex(vec => (vec - center).sqrMagnitude < Tolerance);
-
-            Edge prevEdge, edge;
-            int prevEdgeInd, edgeInd, pointIndex, n, transformedIndex;
-            Triangle[] touchingFaces;
-            Vector3 vert, f, r, transformedVert;
-            Edge[] touchingEdges;
-            for (var index = face.Edges.Length - 1; index > 0; --index) {
-                prevEdge = face.Edges[index - 1];
-                edge = face.Edges[index];
-
-                prevEdgeInd = verticesOut.FindIndex(vec3 => (vec3 - Triangle.EdgePoint(prevEdge,
-                    faces.FindAll(tri => tri.Contains(prevEdge)), vertices)).sqrMagnitude < Tolerance);
-                edgeInd = verticesOut.FindIndex(vec3 => (vec3 - Triangle.EdgePoint(edge,
-                    faces.FindAll(tri => tri.Contains(edge)), vertices)).sqrMagnitude < Tolerance);
-                
-                trianglesOut.Add(centerIndex);
-                trianglesOut.Add(prevEdgeInd);
-                trianglesOut.Add(edgeInd);
-
-                pointIndex = edge.s1;
-                if (pointIndex != prevEdge.s1 && pointIndex != prevEdge.s2) {
-                    pointIndex = edge.s2;
-                }
-                
-                // f : average of all n recently created face points for faces touching vert
-                touchingFaces = faces.Where(f2 => f2.Contains(pointIndex)).ToArray();
-                vert = vertices[pointIndex];
-                f = touchingFaces.Select(tri => tri.Center(vertices)).ToArray().Average();
-                n = touchingFaces.Length;
-
-                // r : average of all n edge midpoints for original edges touching vert
-                touchingEdges = edges.Where(e => e.s1 == pointIndex || e.s2 == pointIndex).ToArray();
-                r = touchingEdges.Select(e => e.Center(vertices)).ToArray().Average();
-
-                transformedVert = (f + 2f * r + (n - 3f) * vert) / n;
-                transformedIndex = verticesOut.Count;
-                verticesOut.Add(transformedVert);
-                
-                trianglesOut.Add(transformedIndex);
-                trianglesOut.Add(edgeInd);
-                trianglesOut.Add(prevEdgeInd);
-            }
-            
-            // link first and last
-            prevEdge = face.Edges[0];
-            edge = face.Edges[^1];
-
-            prevEdgeInd = verticesOut.FindIndex(vec3 => (vec3 - Triangle.EdgePoint(prevEdge,
+        void CreateTriangles(Edge prevEdge, Edge edge, int centerIndex) {
+            int prevEdgeInd = verticesOut.FindIndex(vec3 => (vec3 - Triangle.EdgePoint(prevEdge,
                 faces.FindAll(tri => tri.Contains(prevEdge)), vertices)).sqrMagnitude < Tolerance);
-            edgeInd = verticesOut.FindIndex(vec3 => (vec3 - Triangle.EdgePoint(edge,
+            int edgeInd = verticesOut.FindIndex(vec3 => (vec3 - Triangle.EdgePoint(edge,
                 faces.FindAll(tri => tri.Contains(edge)), vertices)).sqrMagnitude < Tolerance);
-                
+            
             trianglesOut.Add(centerIndex);
-            trianglesOut.Add(edgeInd);
             trianglesOut.Add(prevEdgeInd);
+            trianglesOut.Add(edgeInd);
 
-            pointIndex = edge.s1;
+            var pointIndex = edge.s1;
             if (pointIndex != prevEdge.s1 && pointIndex != prevEdge.s2) {
                 pointIndex = edge.s2;
             }
                 
             // f : average of all n recently created face points for faces touching vert
-            touchingFaces = faces.Where(f2 => f2.Contains(pointIndex)).ToArray();
-            vert = vertices[pointIndex];
-            f = touchingFaces.Select(tri => tri.Center(vertices)).ToArray().Average();
-            n = touchingFaces.Length;
+            var touchingFaces = faces.Where(f2 => f2.Contains(pointIndex)).ToArray();
+            var vert = vertices[pointIndex];
+            var f = touchingFaces.Select(tri => tri.Center(vertices)).ToArray().Average();
+            var n = touchingFaces.Length;
 
             // r : average of all n edge midpoints for original edges touching vert
-            touchingEdges = edges.Where(e => e.s1 == pointIndex || e.s2 == pointIndex).ToArray();
-            r = touchingEdges.Select(e => e.Center(vertices)).ToArray().Average();
+            var touchingEdges = edges.Where(e => e.s1 == pointIndex || e.s2 == pointIndex).ToArray();
+            var r = touchingEdges.Select(e => e.Center(vertices)).ToArray().Average();
 
-            transformedVert = (f + 2f * r + (n - 3f) * vert) / n;
-            transformedIndex = verticesOut.Count;
+            var transformedVert = (f + 2f * r + (n - 3f) * vert) / n;
+            var transformedIndex = verticesOut.Count;
             verticesOut.Add(transformedVert);
                 
             trianglesOut.Add(transformedIndex);
-            trianglesOut.Add(prevEdgeInd);
             trianglesOut.Add(edgeInd);
+            trianglesOut.Add(prevEdgeInd);
+        }
+        
+        foreach (var face in faces) {
+            var center = face.Center(vertices);
+            int centerIndex = verticesOut.FindIndex(vec => (vec - center).sqrMagnitude < Tolerance);
+
+            for (var index = face.Edges.Length - 1; index > 0; --index) {
+                CreateTriangles(face.Edges[index - 1], face.Edges[index], centerIndex);
+            }
+            
+            // link first and last
+            CreateTriangles(face.Edges[^1], face.Edges[0], centerIndex);
         }
 
         result.vertices = verticesOut.ToArray();
