@@ -114,6 +114,14 @@ namespace Geometry {
             return result;
         }
 
+        protected bool Equals(Edge other) {
+            return s1 == other.s1 && s2 == other.s2;
+        }
+
+        public override int GetHashCode() {
+            return s1.GetHashCode() + s2.GetHashCode();
+        }
+
         public bool Equals(int a, int b) {
             return s1 == a && s2 == b || s2 == a && s1 == b;
         }

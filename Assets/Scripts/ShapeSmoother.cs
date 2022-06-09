@@ -12,7 +12,7 @@ public class ShapeSmoother : MonoBehaviour {
         Mesh mesh = meshFilter.sharedMesh;
         switch (smoothMode) {
             case SmoothMode.CatmullClark:
-                meshFilter.sharedMesh = Subdivisions.CatmullClark(mesh, transform);
+                meshFilter.sharedMesh = Subdivisions.CatmullClark(mesh);
                 break;
             case SmoothMode.Loop:
                 meshFilter.sharedMesh = Subdivisions.Loop(mesh);
