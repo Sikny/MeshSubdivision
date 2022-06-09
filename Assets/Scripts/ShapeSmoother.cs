@@ -12,15 +12,21 @@ public class ShapeSmoother : MonoBehaviour {
         Mesh mesh = meshFilter.sharedMesh;
         switch (smoothMode) {
             case SmoothMode.CatmullClark:
-                meshFilter.sharedMesh = Subdivisions.CatmullClark(mesh);
+                mesh = Subdivisions.CatmullClark(mesh);
                 break;
             case SmoothMode.Loop:
-                meshFilter.sharedMesh = Subdivisions.Loop(mesh);
+                mesh = Subdivisions.Loop(mesh);
                 break;
             case SmoothMode.Root3Kobbelt:
-                meshFilter.sharedMesh = Subdivisions.Root3Kobbelt(mesh);
+                mesh = Subdivisions.Root3Kobbelt(mesh);
+                break;
+            case SmoothMode.Butterfly:
+                mesh = Subdivisions.Butterfly(mesh);
                 break;
         }
+
+        mesh.RecalculateNormals();
+        meshFilter.sharedMesh = mesh;
     }
 
     private void OnDrawGizmos() {

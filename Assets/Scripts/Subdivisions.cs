@@ -269,4 +269,9 @@ public static class Subdivisions {
 
         return result;
     }
+
+    public static Mesh Butterfly(Mesh mesh) {
+        Mesh result = new Mesh();
+        return result;
+    }
 }
