@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.sikny.splineeditor": {
+      "version": "0.5.16",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.sikny.unityextendededitor": "0.1.5"
+      },
+      "url": "http://sikny.ovh:4873"
+    },
     "com.sikny.unityextendededitor": {
       "version": "0.2.1",
       "depth": 0,

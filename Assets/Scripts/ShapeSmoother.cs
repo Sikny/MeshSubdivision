@@ -1,4 +1,5 @@
 using GeometrySmoothing;
+using TMPro;
 using UnityEngine;
 using UnityExtendedEditor.Attributes;
 
@@ -6,6 +7,11 @@ public class ShapeSmoother : MonoBehaviour {
     [SerializeField] private MeshFilter meshFilter;
     [SerializeField] private SmoothMode smoothMode;
     [SerializeField] private bool drawVerticesGizmos;
+    [SerializeField] private TextMeshPro demoText;
+
+    private void OnValidate() {
+        if(demoText != null) demoText.text = smoothMode.ToString();
+    }
 
     [Button]
     private void SmoothShape() {
@@ -17,7 +23,7 @@ public class ShapeSmoother : MonoBehaviour {
             case SmoothMode.Loop:
                 mesh = Subdivisions.Loop(mesh);
                 break;
-            case SmoothMode.Root3Kobbelt:
+            case SmoothMode.Kobbelt:
                 mesh = Subdivisions.Root3Kobbelt(mesh);
                 break;
             case SmoothMode.Butterfly:
