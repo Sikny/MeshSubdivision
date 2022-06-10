@@ -272,6 +272,87 @@ public static class Subdivisions {
 
     public static Mesh Butterfly(Mesh mesh) {
         Mesh result = new Mesh();
+
+        var vertices = mesh.vertices;
+        var indices = mesh.triangles;
+        
+        Triangle.MakeUniqueVertices(ref vertices, ref indices);
+
+        var faces = Triangle.ListFromIndices(indices);
+        var edges = Edge.ListFromIndices(indices);
+
+        var verticesOut = new List<Vector3>();
+        var indicesOut = new List<int>();
+        
+        // 1 - Compute a new edge point for each edge
+        var edgePoints = new Dictionary<Edge, Vector3>();
+        for (int i = edges.Count - 1; i >= 0; --i) {
+            var e = edges[i];
+            var touchingFaces = faces.Where(f2 => f2.Contains(e)).ToArray();
+            var v1 = e.s1;
+            var v2 = e.s2;
+            var faceA = touchingFaces[0];
+            var faceB = touchingFaces[1];
+            var vA = faceA.Points.First(ind => ind != v1 && ind != v2);
+            var vB = faceB.Points.First(ind => ind != v1 && ind != v2);
+            var faceC = faces.First(f2 => f2.Contains(vA) && f2.Contains(v1) && !f2.Equals(faceA));
+            var faceD = faces.First(f2 => f2.Contains(vA) && f2.Contains(v2) && !f2.Equals(faceA));
+            var faceE = faces.First(f2 => f2.Contains(v2) && f2.Contains(vB) && !f2.Equals(faceB));
+            var faceF = faces.First(f2 => f2.Contains(v1) && f2.Contains(vB) && !f2.Equals(faceB));
+            var vC = faceC.Points.First(ind => ind != v1 && ind != vA);
+            var vD = faceD.Points.First(ind => ind != vA && ind != v2);
+            var vE = faceE.Points.First(ind => ind != v2 && ind != vB);
+            var vF = faceF.Points.First(ind => ind != v1 && ind != vB);
+
+            var edgePoint = 1 / 2f * (vertices[v1] + vertices[v2]) + 1 / 8f * (vertices[vA] + vertices[vB])
+                            - 1/16f * (vertices[vC] + vertices[vD] + vertices[vE] + vertices[vF]);
+            edgePoints.Add(e, edgePoint);
+        }
+        
+        // 2 - Add vertices
+        for (int i = 0; i < vertices.Length; ++i) {
+            verticesOut.Add(vertices[i]);
+        }
+        
+        // 3 - Construct new edges
+        foreach (var face in faces) {
+            var vertIndices = face.Points;
+            var v1 = vertIndices[0];
+            var v2 = vertIndices[1];
+            var v3 = vertIndices[2];
+            
+            var e1 = edgePoints[new Edge(v2, v3)];
+            var e2 = edgePoints[new Edge(v1, v3)];
+            var e3 = edgePoints[new Edge(v1, v2)];
+            
+            var e1Ind = verticesOut.Count;
+            verticesOut.Add(e1);
+            var e2Ind = verticesOut.Count;
+            verticesOut.Add(e2);
+            var e3Ind = verticesOut.Count;
+            verticesOut.Add(e3);
+
+
+            indicesOut.Add(v1);
+            indicesOut.Add(e3Ind);
+            indicesOut.Add(e2Ind);
+
+            indicesOut.Add(v2);
+            indicesOut.Add(e1Ind);
+            indicesOut.Add(e3Ind);
+
+            indicesOut.Add(v3);
+            indicesOut.Add(e2Ind);
+            indicesOut.Add(e1Ind);
+
+            indicesOut.Add(e1Ind);
+            indicesOut.Add(e2Ind);
+            indicesOut.Add(e3Ind);
+        }
+
+        result.vertices = verticesOut.ToArray();
+        result.triangles = indicesOut.ToArray();
+
         return result;
     }
 }
